@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -27,6 +28,10 @@ class Task
 
     #[ORM\Column(type: "boolean")]
     private $isDone;
+    // Nouvelle propriété author
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private $author;
 
     public function __construct()
     {
@@ -77,5 +82,23 @@ class Task
     public function toggle($flag)
     {
         $this->isDone = $flag;
+    }
+    // Nouveaux getters/setters pour author
+    public function getAuthor(): ?User
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?User $author): self
+    {
+        $this->author = $author;
+        return $this;
+    }
+
+    public function setIsDone(bool $isDone): static
+    {
+        $this->isDone = $isDone;
+
+        return $this;
     }
 }

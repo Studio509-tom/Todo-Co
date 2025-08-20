@@ -15,11 +15,17 @@ security:
             security: false
 
         main:
+            pattern: ^/
             lazy: true
             provider: app_user_provider
+            form_login:
+                login_path: login
+                check_path: login
+                username_parameter: _username  # <- C’est important !
+                password_parameter: _password
+                default_target_path: /
             logout:
                 path: logout
-                target: /
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }

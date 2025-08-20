@@ -8,6 +8,8 @@ class DefaultControllerTest extends WebTestCase
 {
     public function testHomePageIsSuccessful()
     {
-        $this->assertTrue(true);
+        $this->assertSame('test', $_ENV['APP_ENV']);
+;
     }
+    
 }
