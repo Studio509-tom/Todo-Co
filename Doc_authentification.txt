@@ -1,0 +1,168 @@
+# Documentation technique — Authentification & Autorisation
+
+Ce document décrit l’implémentation actuelle de l’authentification (login / rôles / contrôles d’accès) et comment la maintenir ou l’étendre.
+
+## 1. Objectifs
+- Authentifier un utilisateur (email / mot de passe).
+- Protéger les routes critiques (création / édition / suppression de tâches, gestion utilisateurs).
+- Restreindre actions selon rôles et ownership (créateur vs autre utilisateur).
+- Garantir intégrité (mots de passe hashés) et séparation des responsabilités.
+
+## 2. Entité User
+Fichier : `src/Entity/User.php`
+Champs clés :
+- email (identifiant de connexion unique)
+- username (affichage)
+- password (hash bcrypt/argon2 via PasswordHasher)
+- roles (array JSON en base)
+Bonnes pratiques :
+- Toujours retourner au moins `ROLE_USER` dans `getRoles()`.
+- Setter normalise en tableau (évite “Array to string conversion”).
+
+## 3. Stockage
+Base de données relationnelle via Doctrine.
+Table probable : `user`
+- `roles` stocké en JSON / texte selon mapping.
+Migration : toute modification structurelle => `make:migration` puis `doctrine:migrations:migrate`.
+
+## 4. Configuration de sécurité
+Fichier : `config/packages/security.yaml` (non listé ici mais attendu)
+Sections clés :
+- providers : Doctrine entity provider (class User)
+- password_hashers : config de l’algorithme (ex. auto / bcrypt)
+- firewalls : firewall principal (form_login + logout)
+- access_control : restrictions par préfixe d’URL ou rôle
+Points à vérifier :
+- `entry_point` défini si plusieurs authenticators
+- CSRF protection activée pour formulaire de login (par défaut avec `form_login`)
+
+## 5. Flux d’authentification
+1. GET /login : affichage formulaire.
+2. POST /login : envoi credentials (email + password + token CSRF).
+3. Provider charge l’entité User (par email).
+4. Hasher vérifie le mot de passe.
+5. Si succès : User stocké dans la session (token storage).
+6. Redirection (URL cible ou défaut).
+7. En templates : `app.user` disponible.
+
+## 6. Autorisation (Authorization)
+Mécanismes utilisés :
+- Vérification rôle : `is_granted('ROLE_ADMIN')`.
+- Vérification propriétaire (ex. suppression tâche) :
+  ```
+  if ($task->getAuthor() !== $this->getUser() && !$this->isGranted('ROLE_ADMIN')) { 403 }
+  ```
+Conseil : Extraire ces règles dans un Voter (ex. `TaskVoter`) si elles se multiplient.
+
+## 7. Rôles
+Actuels :
+- ROLE_USER : usage standard
+- ROLE_ADMIN : gestion avancée (utilisateurs, suppression tierce)
+Extension :
+- Ajouter constants (ex. `public const ROLE_MANAGER = 'ROLE_MANAGER';`)
+- Adapter access_control ou voters.
+
+## 8. Formulaire utilisateur (création / édition)
+Fichier : `src/Form/UserType.php`
+Points :
+- Champ `roles` (radio / choix restreint) — veiller à toujours fournir un tableau.
+- Hash mot de passe effectué dans le contrôleur avant flush (ne jamais stocker en clair).
+- Sur édition : re-hasher seulement si modifié.
+
+## 9. Password hashing
+Service : `UserPasswordHasherInterface`
+Pattern :
+```
+$hash = $passwordHasher->hashPassword($user, $plainPassword);
+$user->setPassword($hash);
+```
+Ne jamais comparer manuellement. Ne jamais réafficher le hash.
+
+## 10. Protection CSRF
+- Formulaires Symfony : token automatique si `FormType` standard.
+- Pour routes DELETE / POST sans formulaire : ajouter champ `_token` + validation via `isCsrfTokenValid()`.
+
+## 11. Contrôles d’accès dans les contrôleurs
+Exemples :
+- Refuser si non connecté :
+  ```
+  if (!$this->getUser()) { throw $this->createAccessDeniedException(); }
+  ```
+- Refuser action sensible : test ownership + rôle admin.
+Recommandation : migrer vers un Voter (meilleure testabilité).
+
+## 12. Tests
+Types :
+- Fonctionnels : login simulé via `$client->loginUser($user);`
+- Cas minimum :
+  - Connexion valide / invalide
+  - Accès route protégée non connecté => redirection login (302)
+  - Accès route protégée connecté sans rôle => 403
+  - Suppression tâche : auteur OK, autre user 403, admin OK
+Isolation :
+- Purger / recréer utilisateurs de test (éviter violations unique).
+- Option : transactions rollback via KernelTestCase.
+
+## 13. Journalisation (logging)
+À implémenter si besoin :
+- Channel `security` pour échecs de login répétés.
+- Auditer opérations sensibles (suppression tâche) via monolog event listener.
+
+## 14. Extension future
+| Besoin | Solution |
+|--------|----------|
+| Remember-me | Activer `remember_me` dans firewall |
+| OAuth (Google) | Symfony UX / KnpU OAuth2 Client |
+| MFA | Intégrer bundle TOTP / WebAuthn |
+| Verrouillage comptes | Stocker compteur d’échecs + délai |
+
+## 15. Erreurs fréquentes & Prévention
+| Problème | Prévention |
+|----------|-----------|
+| 302 au lieu de 403 | Vérifier si user non connecté (redirigé), sinon lever exception |
+| Rôle perdu | Toujours fusionner `['ROLE_USER']` dans `getRoles()` |
+| Migration inutile | Ne pas committer migration vide |
+| Tâches orphelines | FK `onDelete=SET NULL` ou réassignation contrôlée |
+
+## 16. Sécurité renforcée (checklist)
+- [ ] Aucune fuite de stack trace en prod (APP_DEBUG=0)
+- [ ] Headers sécurisés via `nelmio/security-bundle` (optionnel)
+- [ ] Mot de passe jamais loggué
+- [ ] Formulaires sensibles protégés CSRF
+- [ ] Pas de compte admin par défaut non modifié
+- [ ] Limitation brute force (Rate Limiter / Captcha) si exposition publique
+
+## 17. Ajout d’un Voter (recommandé)
+Structure proposée :
+```
+src/Security/TaskVoter.php
+supports(): attribute in ['TASK_DELETE','TASK_EDIT']
+voteOnAttribute(): test auteur || ROLE_ADMIN
+```
+Usage :
+```
+$this->denyAccessUnlessGranted('TASK_DELETE', $task);
+```
+
+## 18. Export PDF de ce document
+Depuis VS Code :
+1. Ouvrir fichier.
+2. Ctrl+Shift+P → "Markdown: Print".
+3. Enregistrer en PDF.
+Ou via CLI (pandoc) :
+```
+pandoc docs/AUTHENTICATION.md -o docs/AUTHENTICATION.pdf
+```
+
+## 19. Maintenance
+- Revalider config `security.yaml` après mise à jour majeure Symfony.
+- Vérifier dépréciations (`debug:config security` & `debug:router`).
+- Re-auditer rôles / accès à chaque ajout de fonctionnalité critique.
+
+---
+
+Révision rapide (résumé) :
+- Users en base (`User`), password hashé, roles array.
+- Auth : firewall + form_login + provider doctrine.
+- Autorisation : rôles + ownership (à déplacer vers voter).
+- Tests doivent couvrir accès / refus.
