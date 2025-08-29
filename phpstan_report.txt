@@ -1,0 +1,98 @@
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------ 
+  Line   Controller/TaskController.php                                                                                                                   
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------ 
+  42     Parameter #1 $author of method App\Entity\Task::setAuthor() expects App\Entity\User, Symfony\Component\Security\Core\User\UserInterface given.  
+         🪪  argument.type                                                                                                                               
+  93     Cannot call method getId() on App\Entity\User|null.                                                                                             
+         🪪  method.nonObject                                                                                                                            
+  93     Cannot call method getId() on Symfony\Component\Security\Core\User\UserInterface|null.                                                          
+         🪪  method.nonObject                                                                                                                            
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------ 
+
+ ------ --------------------------------------------------------------------------------- 
+  Line   Controller/UserController.php                                                    
+ ------ --------------------------------------------------------------------------------- 
+  17     Property App\Controller\UserController::$passwordHasher has no type specified.   
+         🪪  missingType.property                                                         
+  18     Property App\Controller\UserController::$managerRegistry has no type specified.  
+         🪪  missingType.property                                                         
+  78     Cannot call method hashPassword() on mixed.                                      
+         🪪  method.nonObject                                                             
+  81     Cannot call method flush() on mixed.                                             
+         🪪  method.nonObject                                                             
+  81     Cannot call method getManager() on mixed.                                        
+         🪪  method.nonObject                                                             
+ ------ --------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------- 
+  Line   Entity/Task.php                                                                          
+ ------ ----------------------------------------------------------------------------------------- 
+  16     Property App\Entity\Task::$id is never written, only read.                               
+         🪪  property.onlyRead                                                                    
+         💡  See: https://phpstan.org/developing-extensions/always-read-written-properties        
+  52     Method App\Entity\Task::setCreatedAt() has parameter $createdAt with no type specified.  
+         🪪  missingType.parameter                                                                
+  54     Property App\Entity\Task::$createdAt (DateTimeInterface) does not accept mixed.          
+         🪪  assign.propertyType                                                                  
+  62     Method App\Entity\Task::setTitle() has parameter $title with no type specified.          
+         🪪  missingType.parameter                                                                
+  64     Property App\Entity\Task::$title (string) does not accept mixed.                         
+         🪪  assign.propertyType                                                                  
+  72     Method App\Entity\Task::setContent() has parameter $content with no type specified.      
+         🪪  missingType.parameter                                                                
+  74     Property App\Entity\Task::$content (string) does not accept mixed.                       
+         🪪  assign.propertyType                                                                  
+  82     Method App\Entity\Task::toggle() has parameter $flag with no type specified.             
+         🪪  missingType.parameter                                                                
+  84     Property App\Entity\Task::$isDone (bool) does not accept mixed.                          
+         🪪  assign.propertyType                                                                  
+ ------ ----------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/User.php                                                                                               
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  20     Property App\Entity\User::$id is never written, only read.                                                    
+         🪪  property.onlyRead                                                                                         
+         💡  See: https://phpstan.org/developing-extensions/always-read-written-properties                             
+  29     Property App\Entity\User::$roles type has no value type specified in iterable type array.                     
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+  54     Method App\Entity\User::setUsername() has parameter $username with no type specified.                         
+         🪪  missingType.parameter                                                                                     
+  56     Property App\Entity\User::$username (string) does not accept mixed.                                           
+         🪪  assign.propertyType                                                                                       
+  70     Method App\Entity\User::getRoles() should return array<string> but returns array.                             
+         🪪  return.type                                                                                               
+  74     Method App\Entity\User::setRoles() has parameter $roles with no value type specified in iterable type array.  
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+  87     Method App\Entity\User::getUserIdentifier() should return non-empty-string but returns string.                
+         🪪  return.type                                                                                               
+  89     Method App\Entity\User::setPassword() has parameter $password with no type specified.                         
+         🪪  missingType.parameter                                                                                     
+  91     Property App\Entity\User::$password (string) does not accept mixed.                                           
+         🪪  assign.propertyType                                                                                       
+  99     Method App\Entity\User::setEmail() has parameter $email with no type specified.                               
+         🪪  missingType.parameter                                                                                     
+  101    Property App\Entity\User::$email (string) does not accept mixed.                                              
+         🪪  assign.propertyType                                                                                       
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Repository/TaskRepository.php                                                                                                                                  
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  9      Class App\Repository\TaskRepository extends generic class Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository but does not specify its types: T  
+         🪪  missingType.generics                                                                                                                                       
+  21     Method App\Repository\TaskRepository::findDoneTasks() should return array<App\Entity\Task> but returns mixed.                                                  
+         🪪  return.type                                                                                                                                                
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Repository/UserRepository.php                                                                                 
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  21     Method App\Repository\UserRepository::findOneByEmail() should return App\Entity\User|null but returns mixed.  
+         🪪  return.type                                                                                               
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ [ERROR] Found 31 errors                                                                                                
+

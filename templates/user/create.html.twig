@@ -6,9 +6,20 @@
 {% block body %}
     <div class="row">
         {{ form_start(form, {'action' : path('user_create')}) }}
-            {{ form_widget(form) }}
+        {# Affichage des erreurs globales du formulaire #}
+        {% for error in form.vars.errors %}
+            <div class="form-error-message">{{ error.message }}</div>
+        {% endfor %}
 
-            <button type="submit" class="btn btn-success pull-right">Ajouter</button>
+        {# Affichage des erreurs de chaque champ #}
+        {% for child in form %}
+            {% for error in child.vars.errors %}
+                <div class="form-error-message">{{ error.message }}</div>
+            {% endfor %}
+        {% endfor %}
+
+        {{ form_widget(form) }}
+        <button type="submit" class="btn btn-success pull-right">Ajouter</button>
         {{ form_end(form) }}
     </div>
 {% endblock %}

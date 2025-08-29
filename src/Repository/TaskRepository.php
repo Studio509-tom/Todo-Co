@@ -13,5 +13,15 @@ class TaskRepository extends ServiceEntityRepository
         parent::__construct($registry, Task::class);
     }
 
-    
+      /**
+     * @return Task[]
+     */
+    public function findDoneTasks(): array
+    {
+        return $this->createQueryBuilder('t')
+        ->where('t.isDone = :done')
+        ->setParameter('done', true)
+        ->getQuery()
+        ->getResult();
+    }
 }

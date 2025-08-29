@@ -10,24 +10,36 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-
+use Symfony\Component\HttpFoundation\Response;
 class UserController extends AbstractController
+    
 {
+    private $passwordHasher;
+    private $managerRegistry;
+
+    public function __construct(UserPasswordHasherInterface $passwordHasher, ManagerRegistry $managerRegistry)
+    {
+        $this->passwordHasher = $passwordHasher;
+        $this->managerRegistry = $managerRegistry;
+    }
     
     #[Route('/users', name: 'user_list')]
-    public function listAction(ManagerRegistry $registry)
+    public function listAction(ManagerRegistry $registry): Response
     {
-        $users = $registry->getRepository(User::class)->findAll();
+        // Restriction d'accès : seuls les admins peuvent accéder à la liste des utilisateurs
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            throw $this->createAccessDeniedException("Accès interdit : seuls les administrateurs peuvent accéder à cette page.");
+        }
 
+        $users = $registry->getRepository(User::class)->findAll();
         return $this->render('user/list.html.twig', [
             'users' => $users
         ]);
-
     }
 
  
     #[Route('/users/create', name: 'user_create')]
-    public function createAction(Request $request , ManagerRegistry $registry, UserPasswordHasherInterface $passwordHasher)
+    public function createAction(Request $request , ManagerRegistry $registry, UserPasswordHasherInterface $passwordHasher): Response
     {
         $user = new User();
         $form = $this->createForm(UserType::class, $user);
@@ -55,17 +67,18 @@ class UserController extends AbstractController
     
     #[Route('/users/{id}/edit', name: 'user_edit')]
 
-    public function editAction(User $user, Request $request)
+    public function editAction(User $user, Request $request): Response
     {
         $form = $this->createForm(UserType::class, $user);
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $password = $this->get('security.password_encoder')->encodePassword($user, $user->getPassword());
+            // Utilisation du service injecté pour hasher le mot de passe
+            $password = $this->passwordHasher->hashPassword($user, $user->getPassword());
             $user->setPassword($password);
 
-            $this->getDoctrine()->getManager()->flush();
+            $this->managerRegistry->getManager()->flush();
 
             $this->addFlash('success', "L'utilisateur a bien été modifié");
 
@@ -74,4 +87,40 @@ class UserController extends AbstractController
 
         return $this->render('user/edit.html.twig', ['form' => $form->createView(), 'user' => $user]);
     }
+
+    #[Route('/users/{id}/delete', name: 'user_delete')]
+    public function deleteAction(User $user, ManagerRegistry $registry): Response
+    // Suppression des tâches orphelines (sans auteur)
+    {
+        $em = $registry->getManager();
+
+        // Recherche de l'utilisateur anonyme, création si absent
+        $anonymous = $em->getRepository(User::class)->findOneBy(['username' => 'anonyme']);
+        if (!$anonymous) {
+            $anonymous = new User();
+            $anonymous->setUsername('anonyme');
+            $anonymous->setEmail('anonyme@todo-co.local');
+            $anonymous->setRoles(['ROLE_USER']);
+            $anonymous->setPassword(''); // Mot de passe vide, non connectable
+            $em->persist($anonymous);
+            $em->flush();
+        }
+
+        // 2. Rattachement de toutes les tâches à l'utilisateur anonyme via le repository
+        $tasks = $em->getRepository(\App\Entity\Task::class)->findBy(['author' => $user]);
+        
+        foreach ($tasks as $task) {
+            $task->setAuthor($anonymous);
+            $em->persist($task);
+        }
+        $em->flush();
+
+        $em->remove($user);
+        $em->flush();
+
+        $this->addFlash('success', "L'utilisateur a été supprimé et ses tâches ont été rattachées à l'utilisateur anonyme.");
+        return $this->redirectToRoute('user_list');
+    }
+
+    
 }

@@ -1,14 +1,17 @@
 security:
+    # Configuration du hashage des mots de passe pour l'entité User
     password_hashers:
         App\Entity\User:
             algorithm: auto
 
+    # Provider : définit comment les utilisateurs sont chargés (depuis la base via l'entité User)
     providers:
         app_user_provider:
             entity:
                 class: App\Entity\User
                 property: email
 
+    # Firewalls : zones protégées de l'application
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -18,15 +21,17 @@ security:
             pattern: ^/
             lazy: true
             provider: app_user_provider
+            # Configuration du formulaire de login
             form_login:
                 login_path: login
                 check_path: login
-                username_parameter: _username  # <- C’est important !
+                username_parameter: _username 
                 password_parameter: _password
                 default_target_path: /
             logout:
                 path: logout
 
+    # Règles d'accès selon les rôles
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }

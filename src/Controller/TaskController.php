@@ -8,30 +8,37 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\TaskRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\Response; 
+
 
 class TaskController extends AbstractController
 {
     
     #[Route('/tasks', name: 'task_list')]
-    public function listAction(EntityManagerInterface $em)
+    public function listAction(EntityManagerInterface $em): Response
     {
-        $tasks = $em->getRepository(Task::class)->findAll();
-        
+        $tasks = $em->getRepository(Task::class)->findBy(['isDone' => false]);
         return $this->render('task/list.html.twig', [
             'tasks' => $tasks
         ]);
     }
 
     #[Route('/tasks/create', name: 'task_create')]
-    public function createAction(Request $request, EntityManagerInterface $em)
+    public function createAction(Request $request, EntityManagerInterface $em): Response
     {
+        // Interdire la création si l'utilisateur n'est pas connecté
+        if (!$this->getUser()) {
+            throw $this->createAccessDeniedException('Vous devez être connecté pour créer une tâche.');
+        }
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // ✅ Assigner l'utilisateur connecté comme auteur
+            // Assigner l'utilisateur connecté comme auteur
             $task->setAuthor($this->getUser());
             
             $em->persist($task);
@@ -48,7 +55,7 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/edit', name: 'task_edit')]
-    public function editAction(Task $task, Request $request, EntityManagerInterface $em)
+    public function editAction(Task $task, Request $request, EntityManagerInterface $em): Response
     {
         $form = $this->createForm(TaskType::class, $task);
 
@@ -69,7 +76,7 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/toggle', name: 'task_toggle')]
-    public function toggleTaskAction(Task $task, EntityManagerInterface $em)
+    public function toggleTaskAction(Task $task, EntityManagerInterface $em): Response
     {
         $task->toggle(!$task->isDone());
         $em->flush();
@@ -80,11 +87,18 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/{id}/delete', name: 'task_delete')]
-    public function deleteTaskAction(Task $task, EntityManagerInterface $em)
+    public function deleteTaskAction(Task $task, EntityManagerInterface $em): Response
     {
+        $user = $this->getUser();
         // Vérification de l'auteur de la tâche
-        if ($task->getAuthor()->getId() !== $this->getUser()->getId()) {
-            throw $this->createAccessDeniedException('Vous ne pouvez pas supprimer cette tâche.');
+        if (
+        !$user ||
+        (
+            !$this->isGranted('ROLE_ADMIN') &&
+            $task->getAuthor() !== $user
+        )
+        ) {
+            throw $this->createAccessDeniedException('Vous ne pouvez supprimer que vos propres tâches ou être administrateur.');
         }
         $em->remove($task);
         $em->flush();
@@ -92,5 +106,14 @@ class TaskController extends AbstractController
         $this->addFlash('success', 'La tâche a bien été supprimée.');
 
         return $this->redirectToRoute('task_list');
+    }
+
+    #[Route('/tasks/done', name: 'task_done_list')]
+    public function listDoneTasks(EntityManagerInterface $em): Response
+    {
+        $tasks = $em->getRepository(Task::class)->findBy(['isDone' => true]);
+        return $this->render('task/list.html.twig', [
+            'tasks' => $tasks
+        ]);
     }
 }

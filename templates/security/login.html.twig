@@ -1,17 +1,24 @@
+{# Template du formulaire de connexion utilisateur #}
 {% extends 'base.html.twig' %}
 
 {% block body %}
+    {# Affiche une erreur si l'authentification échoue #}
     {% if error %}
-        <div class="alert alert-danger" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+        <div class="alert alert-danger" role="alert">
+            {{ error.messageKey|trans(error.messageData, 'security') }}
+        </div>
     {% endif %}
 
     <form action="{{ path('login') }}" method="post">
+        {# Champ pour le nom d'utilisateur, prérempli avec la dernière saisie #}
         <label for="username">Nom d'utilisateur :</label>
         <input type="text" id="username" name="_username" value="{{ last_username }}" />
 
+        {# Champ pour le mot de passe #}
         <label for="password">Mot de passe :</label>
         <input type="password" id="password" name="_password" />
 
+        {# Bouton de soumission du formulaire #}
         <button class="btn btn-success" type="submit">Se connecter</button>
     </form>
 {% endblock %}

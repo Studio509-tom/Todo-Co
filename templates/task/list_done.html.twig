@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tâches terminées{% endblock %}
+
+{% block body %}
+    <h1>Toutes les tâches terminées</h1>
+    <ul>
+        {% for task in tasks %}
+            <li>
+                <strong>{{ task.title }}</strong> - {{ task.content }}
+            </li>
+        {% else %}
+            <li>Aucune tâche terminée.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
