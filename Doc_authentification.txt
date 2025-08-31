@@ -52,15 +52,12 @@ Mécanismes utilisés :
   ```
   if ($task->getAuthor() !== $this->getUser() && !$this->isGranted('ROLE_ADMIN')) { 403 }
   ```
-Conseil : Extraire ces règles dans un Voter (ex. `TaskVoter`) si elles se multiplient.
-
 ## 7. Rôles
 Actuels :
 - ROLE_USER : usage standard
 - ROLE_ADMIN : gestion avancée (utilisateurs, suppression tierce)
 Extension :
 - Ajouter constants (ex. `public const ROLE_MANAGER = 'ROLE_MANAGER';`)
-- Adapter access_control ou voters.
 
 ## 8. Formulaire utilisateur (création / édition)
 Fichier : `src/Form/UserType.php`
@@ -89,7 +86,6 @@ Exemples :
   if (!$this->getUser()) { throw $this->createAccessDeniedException(); }
   ```
 - Refuser action sensible : test ownership + rôle admin.
-Recommandation : migrer vers un Voter (meilleure testabilité).
 
 ## 12. Tests
 Types :
@@ -113,7 +109,6 @@ Isolation :
 |--------|----------|
 | Remember-me | Activer `remember_me` dans firewall |
 | OAuth (Google) | Symfony UX / KnpU OAuth2 Client |
-| MFA | Intégrer bundle TOTP / WebAuthn |
 | Verrouillage comptes | Stocker compteur d’échecs + délai |
 
 ## 15. Erreurs fréquentes & Prévention
@@ -132,31 +127,9 @@ Isolation :
 - [ ] Pas de compte admin par défaut non modifié
 - [ ] Limitation brute force (Rate Limiter / Captcha) si exposition publique
 
-## 17. Ajout d’un Voter (recommandé)
-Structure proposée :
 ```
-src/Security/TaskVoter.php
-supports(): attribute in ['TASK_DELETE','TASK_EDIT']
-voteOnAttribute(): test auteur || ROLE_ADMIN
-```
-Usage :
-```
-$this->denyAccessUnlessGranted('TASK_DELETE', $task);
-```
-
-## 18. Export PDF de ce document
-Depuis VS Code :
-1. Ouvrir fichier.
-2. Ctrl+Shift+P → "Markdown: Print".
-3. Enregistrer en PDF.
-Ou via CLI (pandoc) :
-```
-pandoc docs/AUTHENTICATION.md -o docs/AUTHENTICATION.pdf
-```
-
-## 19. Maintenance
+## 17. Maintenance
 - Revalider config `security.yaml` après mise à jour majeure Symfony.
-- Vérifier dépréciations (`debug:config security` & `debug:router`).
 - Re-auditer rôles / accès à chaque ajout de fonctionnalité critique.
 
 ---
@@ -164,5 +137,5 @@ pandoc docs/AUTHENTICATION.md -o docs/AUTHENTICATION.pdf
 Révision rapide (résumé) :
 - Users en base (`User`), password hashé, roles array.
 - Auth : firewall + form_login + provider doctrine.
-- Autorisation : rôles + ownership (à déplacer vers voter).
+- Autorisation : rôles.
 - Tests doivent couvrir accès / refus.

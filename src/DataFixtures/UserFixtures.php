@@ -35,14 +35,6 @@ class UserFixtures extends Fixture
         $manager->persist($user);
         $this->addReference(self::REF_USER, $user);
 
-        // Utilisateur “anonymous” (si logique projet)
-        $anon = new User();
-        $anon->setEmail('anonymous@example.com');
-        $anon->setUsername('anonymous');
-        $anon->setPassword($this->hasher->hashPassword($anon, 'anonpass'));
-        $anon->setRoles(['ROLE_USER']);
-        $manager->persist($anon);
-        $this->addReference(self::REF_ANON, $anon);
 
         $manager->flush();
     }
