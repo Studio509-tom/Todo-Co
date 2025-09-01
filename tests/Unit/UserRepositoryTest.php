@@ -15,12 +15,5 @@ class UserRepositoryTest extends TestCase
 		$repo = new UserRepository($mockRegistry);
 		$this->assertInstanceOf(UserRepository::class, $repo);
 	}
-
-	// Ce test nécessite une base de données et doit être déplacé en test fonctionnel
-	// public function testFindOneByEmailReturnsNullForEmpty()
-	// {
-	//     $mockRegistry = $this->createMock(ManagerRegistry::class);
-	//     $repo = new UserRepository($mockRegistry);
-	//     $this->assertNull($repo->findOneByEmail('notfound@test.com'));
-	// }
+	
 }
