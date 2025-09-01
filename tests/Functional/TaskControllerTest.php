@@ -6,7 +6,7 @@ use App\Entity\User;
 use App\Entity\Task;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-// Test fonctionnel du contrôleur Task (gestion des droits d'accès)
+// Test fonctionnel du contrôleur Task 
 class TaskControllerTest extends WebTestCase
 {
     // Test fonctionnel : création d'une tâche par un utilisateur connecté
