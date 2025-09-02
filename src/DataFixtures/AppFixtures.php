@@ -29,15 +29,16 @@ class AppFixtures extends Fixture
         );
         $manager->persist($anonymous);
 
+        $userRepository = $manager->getRepository(User::class);
         // --- Création d’un admin ---
-        $admin = new User();
-        $admin->setUsername('admin');
-        $admin->setEmail('admin@todoandco.com');
-        $admin->setRoles(['ROLE_ADMIN']);
-        $admin->setPassword(
-            $this->passwordHasher->hashPassword($admin, 'adminpass')
-        );
-        $manager->persist($admin);
+        if (!$userRepository->findOneBy(['username' => 'admin'])) {
+            $admin = new User();
+            $admin->setUsername('admin');
+            $admin->setEmail('admin@todoandco.com');
+            $admin->setPassword('password'); // encoder !
+            $admin->setRoles(['ROLE_ADMIN']);
+            $manager->persist($admin);
+        }
 
         // --- Création de quelques utilisateurs classiques ---
         $users = [];

@@ -86,8 +86,12 @@ class UserControllerTest extends WebTestCase
         $entityManager = static::getContainer()->get('doctrine')->getManager();
         $passwordHasher = static::getContainer()->get(UserPasswordHasherInterface::class);
         $existingAdmin = $entityManager->getRepository(User::class)->findOneBy(['email' => 'admin@test.com']);
-        if ($existingAdmin) {
+        $existingUsernameAdmin = $entityManager->getRepository(User::class)->findOneBy(['username' => 'admin']);
+        if ($existingAdmin ) {
             $entityManager->remove($existingAdmin);
+            $entityManager->flush();
+        } elseif ($existingUsernameAdmin){
+            $entityManager->remove($existingUsernameAdmin);
             $entityManager->flush();
         }
         $admin = new User();
