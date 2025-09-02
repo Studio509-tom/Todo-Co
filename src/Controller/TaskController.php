@@ -17,9 +17,9 @@ class TaskController extends AbstractController
 {
     
     #[Route('/tasks', name: 'task_list')]
-    public function listAction(EntityManagerInterface $em): Response
+    public function listAction(EntityManagerInterface $em , TaskRepository $taskRepository): Response
     {
-        $tasks = $em->getRepository(Task::class)->findBy(['isDone' => false]);
+        $tasks = $taskRepository->findByValueDoneTasks(false);
         return $this->render('task/list.html.twig', [
             'tasks' => $tasks
         ]);
@@ -109,9 +109,9 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/done', name: 'task_done_list')]
-    public function listDoneTasks(EntityManagerInterface $em): Response
+    public function listDoneTasks(EntityManagerInterface $em , TaskRepository $taskRepository): Response
     {
-        $tasks = $em->getRepository(Task::class)->findBy(['isDone' => true]);
+        $tasks = $taskRepository->findByValueDoneTasks(true);
         return $this->render('task/list.html.twig', [
             'tasks' => $tasks
         ]);

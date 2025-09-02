@@ -4,11 +4,13 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\UserType;
+use App\Repository\UserRepository;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Repository\TaskRepository;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\HttpFoundation\Response;
 class UserController extends AbstractController
@@ -89,13 +91,13 @@ class UserController extends AbstractController
     }
 
     #[Route('/users/{id}/delete', name: 'user_delete')]
-    public function deleteAction(User $user, ManagerRegistry $registry): Response
+    public function deleteAction(User $user, ManagerRegistry $registry , UserRepository $userRepository , TaskRepository $taskRepository): Response
     // Suppression des tâches orphelines (sans auteur)
     {
         $em = $registry->getManager();
 
         // Recherche de l'utilisateur anonyme, création si absent
-        $anonymous = $em->getRepository(User::class)->findOneBy(['username' => 'anonyme']);
+        $anonymous = $userRepository->findByUsername('anonyme');
         if (!$anonymous) {
             $anonymous = new User();
             $anonymous->setUsername('anonyme');
@@ -107,7 +109,7 @@ class UserController extends AbstractController
         }
 
         // 2. Rattachement de toutes les tâches à l'utilisateur anonyme via le repository
-        $tasks = $em->getRepository(\App\Entity\Task::class)->findBy(['author' => $user]);
+        $tasks = $taskRepository->findByAuthor($user);
         
         foreach ($tasks as $task) {
             $task->setAuthor($anonymous);

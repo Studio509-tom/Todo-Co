@@ -16,12 +16,22 @@ class TaskRepository extends ServiceEntityRepository
       /**
      * @return Task[]
      */
-    public function findDoneTasks(): array
-    {
-        return $this->createQueryBuilder('t')
-        ->where('t.isDone = :done')
-        ->setParameter('done', true)
-        ->getQuery()
-        ->getResult();
+    // public function findDoneTasks(): array
+    // {
+    //     return $this->createQueryBuilder('t')
+    //     ->where('t.isDone = :done')
+    //     ->setParameter('done', true)
+    //     ->getQuery()
+    //     ->getResult();
+    // }
+
+    public function findByValueDoneTasks(bool $v_done): array
+    {   
+        return $this->findBy(['isDone' => $v_done]);
     }
+
+    public function findByAuthor(\App\Entity\User $user): array
+{
+    return $this->findBy(['author' => $user]);
+}
 }
