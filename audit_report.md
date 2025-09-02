@@ -2,7 +2,6 @@
 
 **Projet :** Todo&Co  
 **Date de l’audit :** 31 août 2025  
-**Auditeur :** GitHub Copilot  
 
 ---
 
