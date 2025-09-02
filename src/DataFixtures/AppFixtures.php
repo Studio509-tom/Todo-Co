@@ -31,11 +31,13 @@ class AppFixtures extends Fixture
 
         $userRepository = $manager->getRepository(User::class);
         // --- Création d’un admin ---
-        if (!$userRepository->findOneBy(['username' => 'admin'])) {
+        if (!$userRepository->findOneBy(['email' => 'admin@todoandco.com'])) {
             $admin = new User();
             $admin->setUsername('admin');
             $admin->setEmail('admin@todoandco.com');
-            $admin->setPassword('password'); // encoder !
+            $admin->setPassword(
+                $this->passwordHasher->hashPassword($admin, 'password')
+            );
             $admin->setRoles(['ROLE_ADMIN']);
             $manager->persist($admin);
         }
